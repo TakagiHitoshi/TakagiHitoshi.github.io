@@ -14,8 +14,8 @@ const NMAX = 100000;
 const OCT = 101;
 const ICT = 21;
 const OCR = 1;
-const ICR = 0.7
-const IICR = 0.3;
+const ICR = Math.random();
+const IICR = Math.random() * ICR;
 const OSTEP = PI2/OCT;
 const ISTEP = PI2/ICT;
 let X = 0;
@@ -28,8 +28,8 @@ Plotly.newPlot('graph',[{
     y: y_axis,
     mode: 'lines'
 }], {
-    xaxis: {range: [-1, 1]},
-    yaxis: {range: [-1, 1]}
+    xaxis: {range: [-1.5, 1.5]},
+    yaxis: {range: [-1.5, 1.5]}
 });
 let i = 0;
 
