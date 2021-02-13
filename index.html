@@ -1,14 +1,94 @@
+<!---*-Mode:javascript;-*--->
 <html>
 <div>
-<img src="余寒見舞い.png">
+<h1>Happy Valentine's Day</h1>
 </div>
-<div style="width:600px;">
-<img src="梅.png" alt="梅の花" width="600">
-</div>
+
+<div id="graph" style="width: 600px; height: 600px;">
+
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script>
+
+const STEP = 1;
+const MAX = 200;
+let x1 = [];
+let y1 = [];
+let y2 = [];
+
+Plotly.newPlot('graph',
+	       [{
+		   x: x1,
+		   y: y1,
+		   type: 'scatter',
+		   mode: 'markers',
+		   marker:{size: 20, color: 'blue'}
+	       },
+		{
+		    x: x1,
+		    y: y2,
+		    type: 'scatter',
+		    mode: 'markers',
+		    marker:{size: 20, color: 'blue'}
+		}
+	       ],
+	       {
+		   xaxis: {range: [-1.1, 1.1],
+			   visible:false},
+		   yaxis: {range: [-1.1, 1.1],
+			   visible:false},
+		   
+});
+
+let i = -MAX;
+function compute(){
+    if (i > MAX)
+	return false;
+    let x = i / MAX;
+    x1.push(x);
+    y1.push(Math.sqrt(Math.abs(x) * (1 - Math.abs(x))));
+    y2.push(-Math.sqrt((1 - Math.sqrt(Math.abs(x)))));
+    i += STEP;
+//    console.log(x);
+    return true;
+}
+    
+function update () {
+    let ret = compute();
+    Plotly.animate('graph', {
+	data: [
+	    {x: x1,
+	     y: y1
+	    }
+	    ,
+	    {x: x1,
+	     y: y2
+	    }
+	]
+    }, {
+	transition: {
+	    duration: 100
+	},
+	frame: {
+	    duration: 100,
+	    redraw: false
+	}
+    });
+    if (ret)
+	frame = requestAnimationFrame(update);
+    else
+	cancelAnimationFrame(frame);
+    
+}
+
+let frame = requestAnimationFrame(update);
+
+</script>
+
 <div style="width:600px;">
 <h2><a href="spirograph_ani.html">Spirograph作ってみました(毎回違います)</a><br></h2>
 </div>
 <div style="width:600px;">
   <a class="twitter-timeline" href="https://twitter.com/TakagiHitoshi?ref_src=twsrc%5Etfw">Tweets by TakagiHitoshi</a> <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
 </div>
+
 </html>
