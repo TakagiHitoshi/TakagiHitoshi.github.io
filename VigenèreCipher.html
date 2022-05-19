@@ -1,0 +1,56 @@
+<!---*-Mode:javascript;-*--->
+<script>
+
+// Simon Singh "The code book" p. 48 Vigenère cipher
+const writeln = (s) => document.write(s+"<br>");
+
+function getPos(s){
+    return MAP.indexOf(s);
+}
+
+function Encode(TEXT){
+    let enc = "";
+    for (let i = 0; i < TEXT.length; i++){
+	let k = i % KEY.length;
+	let plainpos = getPos(TEXT[i]);
+	let keypos = getPos(KEY[k]);
+	let encpos = (plainpos + keypos) % MAP.length;
+	enc += MAP[encpos]
+    }
+    return enc;
+}
+
+function Decode(TEXT){
+    let enc = "";
+    for (let i = 0; i < TEXT.length; i++){
+	let k = i % KEY.length;
+	let plainpos = getPos(TEXT[i]);
+	let keypos = getPos(KEY[k]);
+	let encpos = (MAP.length + plainpos - keypos) % MAP.length;
+	enc += MAP[encpos]
+    }
+    return enc;
+}
+
+//const MAPST = "abcdefghijklmnopqrstuvwxyz ";
+
+//const PLAINTXT = "divert troops to eastridge";
+//const KEYST = "white";
+
+const MAPST = "あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをんぱぴぷぺぽー";
+const PLAINTXT = "ぷーちんしね"
+const KEYST = "ろしあ"
+
+const PLAIN = PLAINTXT.split('');
+const MAP = MAPST.split('');
+const KEY = KEYST.split('');
+
+
+let ciphered = Encode(PLAIN);
+writeln("暗号文："+ciphered)
+let CIPTEXT = ciphered.split('');
+let deciphered = Decode(CIPTEXT);
+writeln("平文："+deciphered)
+
+
+</script>
