@@ -21,15 +21,15 @@ function Encode(TEXT){
 }
 
 function Decode(TEXT){
-    let enc = "";
+    let dec = "";
     for (let i = 0; i < TEXT.length; i++){
 	let k = i % KEY.length;
-	let plainpos = getPos(TEXT[i]);
+	let cyphpos = getPos(TEXT[i]);
 	let keypos = getPos(KEY[k]);
-	let encpos = (MAP.length + plainpos - keypos) % MAP.length;
-	enc += MAP[encpos]
+	let decpos = (MAP.length + cyphpos - keypos) % MAP.length;
+	dec += MAP[decpos]
     }
-    return enc;
+    return dec;
 }
 
 //const MAPST = "abcdefghijklmnopqrstuvwxyz ";
