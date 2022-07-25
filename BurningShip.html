@@ -1,0 +1,76 @@
+<!---*-Mode:javascript;-*--->
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
+<div id="graph" style="width: 800px; height: 600px;"></div>
+
+<script>
+let x_axis = [];
+let y_axis = [];
+let c_axis = [];
+
+const MAX = 255, THRES = 10, DIV = 500;
+// Whole ship
+//const RANGE = 1.7;
+//const XMID = 0.45, YMID = 0.5;
+// First small ship
+//const RANGE = 0.04;
+//const XMID = 1.755, YMID = 0.03;
+// Second small ship
+//const RANGE = 0.04;
+//const XMID = 1.625, YMID = 0.035;
+// Tiny ship in tail
+//const RANGE = 0.005;
+//const XMID = 1.941, YMID = 0.004;
+// Another small one
+const RANGE = 0.008;
+const XMID = 1.861, YMID = 0.005;
+
+const RANGE2 = RANGE / 2;
+const CXMIN = XMID - RANGE2, CXMAX = XMID + RANGE2, CXSTEP = (CXMAX - CXMIN) / DIV;
+const CYMIN = YMID - RANGE2, CYMAX = YMID + RANGE2, CYSTEP = (CXMAX - CXMIN) / DIV;
+for (let cx = CXMIN; cx <= CXMAX; cx += CXSTEP){
+    for (let cy = CYMIN; cy <= CYMAX; cy += CYSTEP){
+	let x = 0, y = 0;
+	for (let i = 0; i < MAX; i++){
+	    let x1 = x*x - y*y - cx;
+	    let y1 = 2 * Math.abs(x * y) - cy;
+	    if (x1*x1 + y1*y1 > THRES){
+		x_axis.push(cx); y_axis.push(cy); c_axis.push(i);
+		break;
+	    }
+	    x = x1; y = y1;
+	}
+    }
+}
+
+let line1 = {
+    x: x_axis,
+    y: y_axis,
+    type: 'scatter',
+    mode: 'markers',
+    marker: {
+	size: 1,
+	color: c_axis,
+	CMIN: 1,
+	CMAX: 255,
+	colorscale: 'Earth'
+    },
+    name: 'f(t)'
+};
+
+let data = [line1];
+
+let layout = {
+  title: 'BURNING SHIP',
+  xaxis: {
+    range: [CXMIN, CXMAX],
+    autorange: true
+  },
+  yaxis: {
+    range: [CYMIN, CYMAX],
+    autorange: true
+  }
+};
+
+Plotly.newPlot('graph', data, layout);
+</script>
