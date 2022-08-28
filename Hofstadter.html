@@ -1,0 +1,127 @@
+<!---*-Mode:javascript;-*--->
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script type="text/javascript" src="./utils.js"></script>
+<script type="text/javascript" src="./complex.js"></script>
+
+
+<div id="graph" style="width: 800px; height: 600px;"></div>
+
+<script>
+// Hofstadter's butterfly    
+// https://en.wikipedia.org/wiki/Hofstadter%27s_butterfly
+
+let x_axis = [];
+let y_axis = [];
+let z_axis = [];
+
+const PI = Math.PI
+const PI2 = PI * 2
+
+function diagH(alpha, nu, N){
+    let H = []
+    for (let i = 0; i < N; i++)
+	H[i] = 2 * Math.cos(PI2 * (i+1) * alpha-nu)
+    return H
+}
+
+function main(N = 50, NALPHA = 50, NNU = 50){
+    let ALPHA = []
+    for (let i = 1; i < NALPHA+1; i++)
+	ALPHA[i] = i / NALPHA
+    let NU = []
+    for (let x = 0, i = 0; x <= PI2; x += PI2/NNU, i++)
+	NU[i] = x
+    for (let i = 1; i < NALPHA+1; i++){
+	for (let j = 0; j < NNU; j++){
+	    for (let k = 0; k < N; k++)
+		y_axis.push(ALPHA[i])
+	    let ret = eigen(diagH(ALPHA[i], NU[j], N), N)
+	    x_axis.push(...ret)
+	    let C = []
+	    for (let m = 0; m < ret.length; m++)
+		C[m] = ret[m] * 255
+	    z_axis.push(...C)
+	}
+    }
+}
+
+main(50, 100, 100)
+
+function eigen(A, N, EPS = 0.0001){
+    let ret = []
+    let LR = findMaxMin(A, N)
+     let left = LR[0], right = LR[1]
+    for (let k = 1; k <= N; k++)
+	ret.push(bisec(A, k, N, EPS, left, right))
+    return ret
+}
+
+function findMed(A,X,M){
+    let P = []
+    let V = 0
+    P[1] = X - A[0]
+    if(P[1] < 0)
+	V = 1
+    P[2] = (X - A[1]) * P[1] - 1 //A[0][1] = 1
+    if( (P[1] * P[2] ) < 0)
+	V = V + 1
+    for (let i = 2; i <  M; i++){
+        P[i+1] = (X - A[i]) * P[i] - P[i-1]
+        if((P[i+1] * P[i]) < 0)
+	    V = V + 1
+    }
+    return V
+}
+
+function bisec(A, K, N, EPS, left, right){
+    let med
+    do {
+	med = (left + right) * 0.5
+	let ret = findMed(A, med, N)
+	if (ret < K) right = med
+	if (ret >= K) left = med
+    }while((right - left) > EPS)
+    return med
+}
+
+function findMaxMin (A, N){
+    let AMAX =  1 + Math.abs(A[0])
+    for (let i = 1; i < N-1; i++){
+        let s = 2 + Math.abs(A[i])
+        AMAX = Math.max(AMAX, s)
+    }
+    let s =  1 + Math.abs(A[N-1])
+    AMAX=Math.max(AMAX, s)
+    return [-AMAX, AMAX]
+}
+
+
+
+let line1 = {
+    x: x_axis,
+    y: y_axis,
+    type: 'scatter',
+    mode: 'markers',
+    marker: {size:2,
+	     color: z_axis,
+	     colorscale:'Rainbow'
+	    },
+    name: 'f(t)'
+}
+
+let data = [line1]
+
+let layout = {
+  title: 'Hofstadter\'s butterfly',
+  xaxis: {
+    range: [-1, 1],
+    autorange: true
+  },
+  yaxis: {
+    range: [-1, 1],
+    autorange: true
+  }
+}
+
+Plotly.newPlot('graph', data, layout)
+</script>
