@@ -1,0 +1,82 @@
+<!---*-Mode:javascript;-*--->
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
+<div id="graph" style="width: 800px; height: 600px;"></div>
+
+<script>
+let xx = [];
+let yy = [];
+let cc = [];
+const PI = Math.PI;
+const EPS = 1e-6
+const LEVEL = 10
+let ret = []
+
+function compRat(a, b, l){
+    let sign, ii, i, newa, newb
+    if (l > LEVEL)
+	return
+    i = Math.floor(a/b)
+    if (Math.abs(i - a/b) < EPS){
+	ret.push(i+1)
+	return
+    }
+    let diff = a/b - i
+    if (diff > 0.5){
+	sign = 1
+	ii = i
+	i += 1
+	newa = b
+	newb = i * b - a
+    }else{
+	sign = -1
+	ii = i + 1
+	newa = b
+	newb = a - i * b
+    }
+    ret.push(sign*ii)
+    compRat(newa, newb, l+1)
+}
+
+function calcRat(ret){
+    const LEN = ret.length
+    let f = ret[LEN - 1]
+    for (let i = 0; i < LEN-1; i++){
+	f = Math.abs(ret[LEN - i - 2]) + Math.sign(ret[LEN - i - 2]) * 1 / f
+    }
+    if (f < 0)
+	f = -f
+    return f
+}
+
+const MAX = 1000
+for (let a  = 2; a < MAX; a++){
+    for (let b = 1; b < a; b++){
+	ret = []
+	compRat(b, a, 0)
+	let cr = calcRat(ret)
+	if (cr == 0)
+	    continue
+	xx.push(b/a); yy.push(cr)
+	xx.push(1-b/a); yy.push(1-cr)
+	cc.push(a*b); cc.push(a+b)
+    }
+}
+
+let line1 = {
+    x: xx,
+    y: yy,
+    type: 'scatter',
+    mode: 'markers',
+    marker:{size:1,
+	    color: cc}
+};
+
+let data = [line1];
+
+let layout = {
+  title: 'Hofstadter\'s INT'
+};
+
+Plotly.newPlot('graph', data, layout);
+</script>
