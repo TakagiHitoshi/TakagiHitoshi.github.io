@@ -11,6 +11,7 @@ let canvas = document.getElementById("canvas");
 let ctx = canvas.getContext("2d");
 let H = canvas.height;
 let W = canvas.width;
+const zeropad = (num) => {return ( '00' + num ).slice( -2 );};
 let now = new Date();
 let hour = now.getHours();
 let minute = now.getMinutes();
