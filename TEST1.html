@@ -1,0 +1,81 @@
+<!---*-Mode:javascript;-*--->
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
+<div>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+
+\(tanh(x)\)
+
+</div>
+
+<div id="graph" style="width: 800px; height: 600px;"></div>
+
+<script>
+let x_axis = [];
+let y1_axis = [];
+let y2_axis = [];
+let y3_axis = [];
+
+const h = 1e-6;
+
+function Tanh(x){
+    return Math.tanh(x);
+}
+
+function derivative(f, x){
+    return (f(x+h) - f(x))/h;
+}
+
+function derivative2(f, x){
+    return (f(x+h) - 2 * f(x) + f(x-h))/h/h;
+}
+
+for (let x = -5; x <= 5; x += 0.01){
+    x_axis.push(x);
+    y1_axis.push(Tanh(x));
+    y2_axis.push(derivative(Tanh, x));
+    y3_axis.push(derivative2(Tanh, x));
+}
+
+let line1 = {
+    x: x_axis,
+    y: y1_axis,
+    type: 'scatter',
+    name: 'tanh(x)'
+};
+
+let line2 = {
+    x: x_axis,
+    y: y2_axis,
+    type: 'scatter',
+    name: 'tanh(x)\''
+};
+
+let line3 = {
+    x: x_axis,
+    y: y3_axis,
+    type: 'scatter',
+    name: 'tanh(x)\'\''
+};
+
+
+let data = [line1, line2, line3];
+
+let layout = {
+  title: 'GRAPH',
+  xaxis: {
+    range: [-1, 1],
+    autorange: true
+  },
+  yaxis: {
+    range: [-1, 1],
+    autorange: true
+  },
+  zaxis: {
+    range: [-1, 1],
+    autorange: true
+  }
+};
+
+Plotly.newPlot('graph', data, layout);
+</script>
