@@ -1,18 +1,13 @@
 <html>
 <body>
-<div>
-<canvas id="canvas" width="160" height="80"
-style="background-color:#eee">
-</canvas>
-</div>
-    
+<canvas id="canvas" width="200" height="320"></canvas>    
 <script>
+const zeropad = (num) => {return ( '00' + num ).slice( -2 );};
 let canvas = document.getElementById("canvas");
 let ctx = canvas.getContext("2d");
 let H = canvas.height;
 let W = canvas.width;
-const zeropad = (num) => {return ( '00' + num ).slice( -2 );};
-let now = new Date();
+const now = new Date();
 let hour = now.getHours();
 let minute = now.getMinutes();
 let second = now.getSeconds();
@@ -22,7 +17,7 @@ let second = now.getSeconds();
 ctx.font = 14 + "px arial";
 ctx.textAlign="center";
 ctx.fillStyle = '#ad0606';
-ctx.fillText('FOO', 40, 30);
+ctx.fillText('FOO', 40, 20)
 ctx.fillText(time, W*0.5, H*0.5);
 //ctx.fill();
 </script>
