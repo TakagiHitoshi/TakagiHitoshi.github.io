@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>Auto Reload</title>
+</head>
+<body>
+<img src='https://takagihitoshi.github.io/9%E6%9C%88%20%E8%9C%BB%E8%9B%89.png' width="600px" alt="蜻蛉">
+</body>
+
+
+<script>
+
+// ページをreloadする方法
+// reloadの応用方法
+// キャッシュを無視してリロードする方法
+function doReloadNoCache() {
+ 
+    // キャッシュを無視してサーバーからリロード
+    window.location.reload(true);
+ 
+}
+ 
+window.addEventListener('load', function () {
+ 
+    // ページ表示完了した5秒後にリロード
+    setTimeout(doReloadNoCache, 5000);
+ 
+});
+
+</script>
