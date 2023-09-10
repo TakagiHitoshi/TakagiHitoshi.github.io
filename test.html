@@ -10,22 +10,15 @@
 
 
 <script>
-
-// ページをreloadする方法
-// reloadの応用方法
-// キャッシュを無視してリロードする方法
-function doReloadNoCache() {
- 
-    // キャッシュを無視してサーバーからリロード
-    window.location.reload(true);
- 
+// ページをreload
+function doReloadNoCache() { 
+   // キャッシュを無視してサーバーからリロード
+    window.location.reload(true); 
 }
  
 window.addEventListener('load', function () {
- 
-    // ページ表示完了した5秒後にリロード
-    setTimeout(doReloadNoCache, 5000);
- 
+ // ページ表示完了した5秒後にリロード
+    setTimeout(doReloadNoCache, 100000);
 });
 
 </script>
