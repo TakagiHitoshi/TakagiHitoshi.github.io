@@ -21,11 +21,6 @@ window.addEventListener('load', function () {
     setTimeout(doReloadNoCache, 10000);
 });
 
-if( document.body.requestFullscreen ) {
-         document.body.requestFullscreen();
-// Safari & Edge & Chrome v68以前
-} else if( document.body.webkitRequestFullscreen ) {
-   document.body.webkitRequestFullscreen();
-}
+document.body.requestFullscreen();
 
 </script>
