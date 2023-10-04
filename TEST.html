@@ -1,23 +1,48 @@
-<html>
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>Auto Reload</title>
+</head>
 <body>
-<canvas id="canvas" width="200" height="320"></canvas>    
+<img src='https://takagihitoshi.github.io/Coleus.png' width="640px">
+<button id="button1">Full Screen</button>
+</body>
+
+
 <script>
-const zeropad = (num) => {return ( '00' + num ).slice( -2 );};
-let canvas = document.getElementById("canvas");
-let ctx = canvas.getContext("2d");
-let H = canvas.height;
-let W = canvas.width;
-const now = new Date();
-let hour = now.getHours();
-let minute = now.getMinutes();
-let second = now.getSeconds();
- let time = zeropad(hour)+":"
-    +zeropad(minute)+":"
-    +zeropad(second);
-ctx.font = 14 + "px arial";
-ctx.textAlign="center";
-ctx.fillStyle = '#ad0606';
-ctx.fillText('FOO', 40, 20)
-ctx.fillText(time, W*0.5, H*0.5);
-//ctx.fill();
+// ページをreload
+function doReloadNoCache() { 
+   // キャッシュを無視してサーバーからリロード
+    window.location.reload(true); 
+}
+ 
+window.addEventListener('load', function () {
+ // ページ表示完了した5秒後にリロード
+    setTimeout(doReloadNoCache, 10000);
+});
+
+window.addEventListener('load', function(){
+
+	// フルスクリーン表示
+	document.getElementById('button1').addEventListener('click', function(){
+
+		// Chrome & Firefox v64以降
+		if( document.body.requestFullscreen ) {
+			document.body.requestFullscreen();
+
+		// Firefox v63以前
+		} else if( document.body.mozRequestFullScreen ) {
+			document.body.mozRequestFullScreen();
+
+		// Safari & Edge & Chrome v68以前
+		} else if( document.body.webkitRequestFullscreen ) {
+			document.body.webkitRequestFullscreen();
+
+		// IE11
+		} else if( document.body.msRequestFullscreen ) {
+			document.body.msRequestFullscreen();
+		}				
+	});
+});
 </script>
