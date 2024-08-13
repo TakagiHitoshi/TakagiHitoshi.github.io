@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html>
+<body>
+<div>
+<canvas id="canvas" width="160" height="80"
+style="background-color:#eee">
+</canvas>
+</div>
+<div>
+<canvas id="cal1" width="160" height="120"
+style="background-color:#fff">
+</canvas>
+</div>
+    
+<script>
+let canvas = document.getElementById("canvas");
+let ctx = canvas.getContext("2d");
+let H = canvas.height;
+let W = canvas.width;
+let canvas1 = document.getElementById("cal1");
+let ctx1 = canvas1.getContext("2d");
+let H1 = canvas1.height;
+let W1 = canvas1.width;
+let Y, M, D
+
+let weather = '';
+let cal = '';
+let temps = '';
+let pops = '';
+let ISDLST = {US: false, UK:false};
+let TJ = false
+
+const week = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
+const zeropad = (num) => {return ( '00' + num ).slice( -2 );};
+const WD   = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
+const DAYM = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+const HOLDY = [
+     [1, 1], [1, 2], [1, 8], [2, 12], [2, 23], [3, 20], [4, 29], [5, 3], [5, 4], [5, 5],
+     [5, 6], [7, 15], [8, 12], [9, 16], [9, 23], [10, 14], [11, 4], [11, 23]];
+const BRTDAY = [[1, 25], [2, 28], [4, 6], [7, 7], [7, 26], [8, 5]];
+//const STROKES = ['#E6E6FA', '#B0E0E6', '#98FB98', '#FFDAB9', '#FFC0CB', '#FFA07A'];
+const STROKES = ['#B0E0E6', '#B0E0E6', '#B0E0E6', '#FFC0CB', '#FFC0CB', '#FFC0CB'];
+const TZ = [['US', 'SJC', -17], ['US', 'BOS', -14], ['UK', 'LHR', -9]];
+const MOONPHASE = ['🌑', '🌒', '🌓', '🌔', '🌕', '🌖', '🌗', '🌘']
+const PRIMES = ESieve()
+
+function onMouseOverTime(){
+    startT = new Date();
+    ctx.clearRect(0, 0, W, H);
+    drawTimeSec(ctx, W, H, startT);
+}
+
+function onMouseClickTime(){
+    startT = new Date();
+    ctx.clearRect(0, 0, W, H);
+    TJ = !TJ
+    if (TJ)
+        drawTimeTJ(ctx, W, H, startT)
+    else
+        drawTime(ctx, W, H, startT)
+}   
+
+canvas.addEventListener('click', onMouseClickTime, false);
+    
+canvas.addEventListener('mouseenter', onMouseOverTime, false);
+
+setInterval(drawClock, 1000);
+    
+let startT = 0;
+
+function drawClock() {
+    let now = new Date();
+    if (now  - startT > 2000) {
+        ctx.clearRect(0, 0, W, H);
+        DrawCal(now);
+        drawWeatherNow(now, ctx, 'green')
+        if (TJ)
+            drawTimeTJ(ctx, W, H, now)
+        else
+            drawTime(ctx, W, H, now);
+    } else {
+        ctx.clearRect(0, 0, W, H);
+        drawTimeSec(ctx, W, H, now);
+    }
+}
+
+function drawTime(ctx, W, H, now){
+    let hour = now.getHours();
+    let minute = now.getMinutes();
+    let second = now.getSeconds();
+    let time = zeropad(hour)+":"
+               +zeropad(minute)/*+":"
+               +zeropad(second)*/;
+//    ctx.beginPath();
+//    ctx.fillStyle = STROKES[Math.floor(second/10)];
+//    ctx.fillRect(0, 0, W, H);
+    ctx.font = H*0.23 + "px arial";
+    let ppos = H * 0.23;
+    let datest = (now.getMonth() + 1).toString()+"/"+now.getDate().toString();
+    ctx.textAlign="center";
+    ctx.fillStyle = '#ad0606';
+    ctx.fillText(datest, W*0.15, ppos);
+    datest = now.getDay();
+    ctx.fillText(week[datest], W*0.8, ppos);
+    ctx.fill();
+//    ctx.fillStyle = '#1b5d98';
+    ctx.font = "bold "+H*0.45 + "px arial";
+    ctx.fillText(time, W*0.5, H*0.55);
+    if (weather)
+        dispWeather(weather, temps, pops, W, H, hour, second);
+    let [getsurei, moonPhase] = getMoonPhase(Y, M, D)
+    ctx.font = H*0.18 + "px arial";
+    ctx.fillText(MOONPHASE[moonPhase], W*0.85, H*0.42)
+    ctx.fillStyle = '#ef4747';
+    ctx.font = H*0.14 + "px arial";
+    ctx.fillText(getsurei.toFixed(1), W*0.86, H*0.57)
+    const hpos = W*0.03;
+    if (second % 2 == 0){
+        ctx.beginPath();
+        ctx.moveTo(hpos, H*0.9);
+        ctx.strokeStyle = '#a0a0a0';
+        ctx.lineWidth = 2;
+//        ctx.strokeStyle = STROKES[Math.floor(second/10)];
+        ctx.lineTo(hpos, (1 - second / 65)*H*0.9);
+        ctx.stroke();
+        
+    }
+}  
+
+function drawTimeSec(ctx, W, H, now){
+    let hour = now.getHours();
+    let minute = now.getMinutes();
+    let second = now.getSeconds();
+    let time = zeropad(hour)+":"
+               +zeropad(minute)+":"
+               +zeropad(second);
+    ctx.beginPath();
+    ctx.fillStyle = '#eee';
+    ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = '#38761d';
+    ctx.font = "bold "+H*0.5 + "px arial";
+    ctx.fillText(time, W*0.5, H*0.6);
+    for (let i = 0; i < TZ.length; i++){
+        let hour1 = hour + TZ[i][2]
+        if (ISDLST[TZ[i][0]])
+            hour1++
+        if (hour1 < 0)
+            hour1 += 24
+        let time = TZ[i][1]+" "+zeropad(hour1);
+//        ctx.fillStyle = '#ffccff';
+        ctx.font = "bold "+H*0.15 + "px arial";
+        ctx.fillText(time, W*(0.2+i*0.3), H*0.8);
+    }
+}  
+
+function getMoonPhase(Y, M, D){
+    if (M < 3){
+	Y--;
+	M += 12
+    }
+    D--
+    let A = Math.floor(Y/100)
+    let B = Math.floor(A/4)
+    let C = 2 - A + B
+    let E = Math.floor(365.25 * (Y + 4716))
+    let F = Math.floor(30.6001 * (M + 1))
+    let JD = C + D + E + F - 1524.5
+    let DaySinceNewMoon = JD - 2451549.5
+//    let NewMoons = DaySinceNewMoon / 29.5305882
+    let NewMoons = DaySinceNewMoon / 29.53
+    let Phase = Math.floor((NewMoons - parseInt(NewMoons))*8+1)
+    if (Phase >= 8) Phase = 0
+//    let DaysIntoCycle = (NewMoons - Math.floor(NewMoons)) * 29.5305882
+   let DaysIntoCycle = (NewMoons - Math.floor(NewMoons)) * 29.53
+    return [DaysIntoCycle+0.2, Phase]
+}
+    
+function nthSunday(Year, Month, n){  // no check for non-existent Sundays
+    let toSunday = 8 - DayOfWeek(Year, Month, 1)
+    let nthSunday = (n - 1) * 7 + toSunday
+    return nthSunday
+}
+
+// 最終日曜日は何日？ for British Daylight Savings Time
+
+function theLastSunday(Year, Month){  // assuming the Month has 31st
+    let toSunday = 8 - DayOfWeek(Year, Month, 1)
+    for (let n = 1;  n < 5, toSunday < 25; n++)
+	toSunday +=  7
+    return toSunday
+}
+
+// Daylight Savings Time Checker
+
+function DLST(country, Y, M, D){
+    const DLS = {US: [3, 11], UK: [3, 10]}
+    let DLST = false
+    let START = DLS[country][0], END = DLS[country][1]
+    if (M > START && M < END){
+	DLST = true
+	return DLST
+    }
+    if (M == START){
+	if (country == 'US'){
+	    if (D >= nthSunday(Y, M, 2)){
+		DLST = true
+		return DLST
+	    }
+	}else if (country == 'UK'){
+	    if (D >= theLastSunday(Y, M)){
+		DLST = true
+		return DLST
+	    }
+	}
+    }else if (M == END){
+	if (country == 'US'){
+	    if (D < nthSunday(Y, M, 1)){
+		DLST = true
+		return DLST
+	    }
+	}else if (country == 'UK'){
+	    if (D < theLastSunday(Y, M)){
+		DLST = true
+		return DLST
+	    }
+	}
+    }
+    return DLST
+}
+
+function drawTimeTJ(ctx, W, H, now){
+    var hour = now.getHours();
+    var minute = now.getMinutes();
+    var second = now.getSeconds();
+    var time = ''
+    if (minute == 0)
+        time = zeropad(hour)+'時'+'丁度';
+    else if (minute < 5)
+        time = zeropad(hour)+'時'+'過ぎ';
+    else if (minute >= 5 && minute < 25)
+        time = zeropad(hour)+'時'+'前半';
+    else if (minute >= 25 && minute < 30)
+        time = zeropad(hour)+'時'+'半前';
+    else if(minute == 30)
+        time = zeropad(hour)+'時'+'半';
+    else if (minute > 30 && minute < 35)
+        time = zeropad(hour)+'時'+'半過';
+    else if(minute >= 35 && minute < 55 )
+        time = zeropad(hour)+'時'+'後半';
+    else{
+        if (minute >= 55) hour = (hour + 1) % 24;
+        time = '直に'+zeropad(hour)+'時';
+    }
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = '#66c83a';
+    ctx.font = "bold " + H*0.4 + "px arial";
+    ctx.fillText(time, W/2, H/2);
+ }  
+    
+function Replace(s){
+    const ret = s.replace(/昼過ぎ　|夜　|夕方　|後　|午後　|から　/, '→')
+//	  .replace('まで　', '←')
+	  .replace('時々', '|')
+	  .replace('所により', '/')
+	  .replace('晴れ', '☀')
+	  .replace('くもり', '☁')
+	  .replace('雨', '☔')
+	  .replace('雷', '☇')
+	  .replace('雪', '☃')
+	  .replace(/[\u3041-\u3096々〇〻\u3400-\u9FFF\uF900-\uFAFF\uD840-\uD87F\uDC00-\uDFFF]+/g, '')
+	  .replace(/　/ig, '');
+    return ret;
+}
+
+// 気象庁のAPIから予報を取得
+function getJSON() {
+    let req = new XMLHttpRequest();
+    req.onreadystatechange = function() {	
+	if(req.readyState == 4 && req.status == 200){
+	    const jason = req.responseText.substr(1, req.responseText.length-2);
+	    const pos1 = jason.indexOf('publishingOffice', 10);
+	    const jason1 = jason.slice(0, pos1-3);
+	    const obj = JSON.parse(jason1);
+	    const TS = obj.timeSeries;
+	    const TD = TS[0].areas;
+	    const WE0 = TD[0].weathers;
+        const TT = TS[2].areas[0].temps;
+        const PO = TS[1].areas[0].pops;
+        weather = WE0;
+        temps = TT;
+        pops = PO;
+    }
+  };
+    // HTTPメソッドとアクセスするサーバーの　URL　を指定
+    req.open("GET", "https://www.jma.go.jp/bosai/forecast/data/forecast/130000.json", false); 
+  req.send(null);// 実際にサーバーへリクエストを送信
+}
+
+function dispWeather(WE0, TT, PO, W, H, hour, second){
+    ctx.font = H*0.2 + "px arial";
+    ctx.fillText(Replace(WE0[0], hour), W*0.25, H*0.75);
+    ctx.fillText(Replace(WE0[1], hour), W*0.7, H*0.75);
+    ctx.font = H*0.15 + "px arial";
+    if (second - Math.floor(second/10)*10 < 5){
+        ctx.fillText("℃", W*0.1, H*0.9);
+        for (let i = 0; i < TT.length; i++){
+            if (i == 1 && TT[i] == TT[i - 1])
+                TT[i] = ''
+            ctx.fillText(TT[i], W*(0.2*(5-TT.length)+i*0.2), H*0.9);
+        }
+     }else{
+         ctx.fillText("%", W*0.08, H*0.9);
+         for (let i = 0; i < Math.min(6, PO.length); i++)
+             ctx.fillText(PO[i], W*(0.2+i*0.15), H*0.9);
+     }
+}
+
+
+// ツェラーの公式
+// https://ja.wikipedia.org/wiki/ツェラーの公式
+function ZellerISO(y, m, d){ // returns 1 to 7 (Monday to Sunday)
+    return (d + Math.floor(26*(m+1)/10)
+	    + (y % 100) + Math.floor((y % 100) /4)
+	    - 2 * Math.floor(y/100) + Math.floor(Math.floor(y/100)/4) + 5) % 7 + 1;
+}
+
+function DayOfWeek(y, m, d){ 
+    if (m < 3){
+	y--;
+	m += 12;
+    }
+    let dofw = ZellerISO(y, m, d) 
+    return (dofw == 7) ? 0 : dofw;
+}
+
+function leapYear(y){
+    if (y % 100 == 0){
+	if (y % 400 == 0)
+	    return true;
+	else
+	    return false;
+    }else{
+	if (y % 4 == 0)
+	    return true;
+	else
+	    return false;
+    }
+}
+
+function dayCount(y, m, d){
+    if (m <= 2){
+	--y; m +=12
+    }
+    let dy = 365 * (y - 1)
+    let c = Math.floor(y / 100)
+    let dl = (y >> 2) - c + (c >> 2)
+    let dm = (m * 979 - 1033) >> 5
+    return dy + dl + dm + d - 1
+}
+    
+let DOB = dayCount(1958, 7, 26)
+let D0101;
+let thDay;
+
+canvas1.addEventListener('click', onMouseClickCal, false);
+canvas1.addEventListener('mouseenter', onMouseOverCal1, false);
+canvas1.addEventListener('mouseleave', onMouseLeaveCal1, false);
+    
+let tempMonth = 2
+    
+function onMouseClickCal(){
+    const now = new Date();
+    let Y = now.getFullYear();
+    let M = now.getMonth() + (tempMonth++);
+    if (M > 12){ Y++; M -= 12;}
+    drawCal(Y, M, ctx1, true);
+}
+
+function onMouseOverCal1(){
+    const now = new Date();
+    const Y = now.getFullYear();
+    const M = now.getMonth() + 1
+    drawDayCount(ctx1, DCcolor2)
+    drawCal(Y, M, ctx1, false)
+    drawSunMoon(ctx1)
+}
+
+function onMouseLeaveCal1(){
+    const now = new Date();
+    const Y = now.getFullYear();
+    const M = now.getMonth() + 1
+    drawDayCount(ctx1, DCcolor1)
+    drawCal(Y, M, ctx1, false)
+    drawSunMoon(ctx1)
+    tempMonth = 2
+}
+    
+    
+function DrawCal(now){
+    const minute = now.getMinutes();
+    const second = now.getSeconds();
+   if (cal == '' || (second == 0)){
+       Y = now.getFullYear();
+       M = now.getMonth()+1;
+       D = now.getDate();
+       thDay = dayCount(Y, M, D)
+       D0101 = dayCount(Y, 1, 1)
+       DCcolor1 = '#cfe2f3'
+       DCcolor2 = '#cf00f3'
+       const DCount = thDay-DOB
+       if (PRIMES.includes(DCount)){
+          DCcolor1 = '#ffe293'
+          DCcolor2 = '#ff0093'
+       }
+       drawDayCount(ctx1, DCcolor1)
+       drawCal(Y, M, ctx1, false);
+       getWeatherNow()
+       drawWeatherNow(now, ctx, 'black')
+       setSunMoon()
+       drawSunMoon(ctx1)
+       const HOUR = now.getHours()
+       const imagePath = getWeatherImage(WEATHER[HOUR], HOUR)
+       weatherImage.src = imagePath
+       cal = "on";
+       getJSON();
+       for (let i = 0; i < TZ.length; i++){
+	       let country = TZ[i][0];
+	    ISDLST[country] = DLST(country, Y, M, D)
+       }
+    }
+}
+
+function drawDayCount(ctx, color){
+    ctx.clearRect(0, 0, 160, 120)
+    ctx.font = "bold " + W*0.3 + "px arial"
+    ctx.fillStyle = color
+    ctx.textAlign="center"
+    const DCount = thDay-DOB
+    ctx.fillText(DCount, 0.5*W1, 0.6*H1);
+    ctx.fill()
+}
+        
+function drawCal(Y, M, ctx, clear){
+    if (clear)  ctx.clearRect(0, 0, 160, 120)
+    const STEP = 0.14, OFST = 0.08;
+    ctx.font = "bold " + W*0.08 + "px arial";
+    ctx.fillStyle = '#000000';
+    ctx.textAlign="center";
+    const DWOF = DayOfWeek(Y, M, 1);
+    const DAYS = DAYM[M-1] + ((leapYear(Y) && M == 2) ? 1: 0);
+    const MONTHST = Y.toString()+" / "+M.toString();
+    ctx.fillText(MONTHST, 0.5*W1, 0.13*H1);
+    ctx.font = W*0.06 + "px arial";
+
+    for (let i = 0; i < WD.length; i++){
+    	ctx.fillStyle = '#000000';
+	   if (i == 0)
+	        ctx.fillStyle = '#f00000';
+        if (i == WD.length-1)
+            ctx.fillStyle = '#0000f0';
+        ctx.fillText(WD[i], (STEP*i+OFST)*W1, 0.25*H1);
+    }
+    ctx.fill();
+    ctx.font = W*0.08 + "px arial";
+    ctx.fillStyle = '#000000';
+    let today = new Date();
+    let pos = DWOF;
+    let lin = 0;
+    for (let d = 1; d <= DAYS; d++){
+        let birthday = false;
+        ctx.font = W*0.08 + "px arial";
+        let dst = d.toString();
+        ctx.fillStyle = '#000000';
+        if (pos == 0)
+            ctx.fillStyle = '#f00000';
+        if (pos == 6)
+            ctx.fillStyle = '#0000f0';
+        for (let j = 0; j < HOLDY.length; j++)
+            if (M == HOLDY[j][0] && d == HOLDY[j][1])
+                ctx.fillStyle = '#f00000';            
+        for (let j = 0; j < BRTDAY.length; j++)
+            if (M == BRTDAY[j][0] && d == BRTDAY[j][1]){
+//                ctx.fillStyle = '#1d8f12';            
+                ctx.fillStyle = '#1d8f21';            
+                ctx.font = "italic bold " + W1*0.1 + "px Gothic";
+                birthday = true;
+            }
+        if (today.getMonth()+1 == M && today.getDate() == d){
+            ctx.font = "bold " + W1*0.1 + "px Gothic";
+            dst ="["+d.toString()+"]";
+        }else if (birthday){
+            dst ="_"+d.toString()+"_";          
+        }
+        ctx.fillText(dst, (STEP*pos+OFST)*W1, (0.12*lin+0.35)*H1);
+        ctx.fill();
+        if (++pos > 6){
+            pos = 0;
+            lin++;
+        }
+    }
+}
+    
+// 日の出、日の入計算
+// http://www.iot-kyoto.com/satoh/2016/01/22/post-99/
+
+const LAT = 35.68007144001918
+const LON = 139.67088635129102
+const PI   = Math.PI,
+      sin  = Math.sin,
+      cos  = Math.cos,
+      tan  = Math.tan,
+      asin = Math.asin,
+      atan = Math.atan2,
+      acos = Math.acos,
+      rad  = PI / 180;
+
+function getSunTimes(day, phi, L){ // day は元日からの日数, phi 緯度 L 経度
+    const DEG = (a) => {return a * 180 / PI}
+    const RAD = (a) => {return a * PI / 180}
+
+    // 出力
+    let hour		//---------- O 南中時刻
+    let hourS		//---------- O 日出時刻
+    let hourE		//---------- O 日没時刻
+
+    // 作業変数
+    let khi
+    let megaS
+    let Et					//------ 均時差[h]
+    let delta				//------ 太陽赤緯[°]
+    let omega				//------ 太陽の時角[°]
+    let alpha				//------ 太陽の方位角[°]
+    let h					//------ 太陽高度[°]（=90°－θz）
+
+    //----------------- °で渡されるのでラジアンに変換する
+    phi = RAD(phi) ;
+    L = RAD(L) ;
+
+    //----------------- δ,χの計算
+    khi = (day - 1) * 2.0 * PI / 365.0 ;
+    delta= 0.006918 - 0.399912 * cos(khi) + 0.070257 * sin(khi)
+	- 0.006758 * cos(2 * khi) + 0.000907 * sin(2 * khi)
+	- 0.002697 * cos(3 * khi) + 0.001480 * sin(3 * khi) ;
+
+    //----------------- Et, ωの計算
+    Et = (0.0172 + 0.4281 * cos(khi) - 7.3515 * sin(khi)
+	  - 3.3495 * cos(2 * khi) - 9.3619 * sin(2 * khi)) / 60.0 ;
+
+    //----------------- 南中時刻
+    hour = ((9.0 - Et + 12.0) * 15.0 - DEG(L)) / 15.0 ;
+
+    //----------------- 南中時の太陽高度(南中時は ω= 0)
+    h = asin(sin(phi) * sin(delta) + cos(phi) * cos(delta) * cos(omega)) ;
+    //h = RAD(90) - phi + delta ;		//------- cos(omega = 0) == 1
+
+    //----------------- 日出・日没時刻 : －大気差－眼高差－視半径＋地心視差 ≒ -0.899
+    omegaS = acos((sin(RAD(-0.899)) - sin(phi) * sin(delta)) / (cos(phi) * cos(delta))) ;
+
+    hourS = (DEG(-omegaS) + (9.0 - Et + 12.0) * 15.0 - DEG(L)) / 15.0 ;
+    hourE = (DEG( omegaS) + (9.0 - Et + 12.0) * 15.0 - DEG(L)) / 15.0 ;
+    return {hour:hour, hourS:hourS, hourE:hourE}
+}
+
+
+function deg2HMS(deg, frac=false){
+    let H = Math.floor(deg)
+    let M0 = (deg - H) * 60
+    let M = Math.floor(M0)
+    let S0 = (M0 - M) * 60
+    let S
+    if (frac)
+	S = S0
+    else
+	S = Math.round(S0)
+    return [H, M, S]
+}
+
+function Date2HMS(date){
+    let H = date.getHours()
+    let M = date.getMinutes()
+    let S = date.getSeconds()
+    return [H, M, S]
+}
+
+// 月の出・月の入り
+// https://qiita.com/wm-ytakano/items/94d5b038e1b6aaeb7b7c
+// https://github.com/mourner/suncalc/blob/master/suncalc.js
+
+
+function getMoonTimes(date, lat, lng, inUTC) {
+    var t = new Date(date);
+    if (inUTC) t.setUTCHours(0, 0, 0, 0);
+    else t.setHours(0, 0, 0, 0);
+
+    var hc = 0.133 * rad,
+        h0 = getMoonPosition(t, lat, lng).altitude - hc,
+        h1, h2, rise, set, a, b, xe, ye, d, roots, x1, x2, dx;
+
+    // go in 2-hour chunks, each time seeing if a 3-point quadratic curve crosses zero (which means rise or set)
+    for (var i = 1; i <= 24; i += 2) {
+        h1 = getMoonPosition(hoursLater(t, i), lat, lng).altitude - hc;
+        h2 = getMoonPosition(hoursLater(t, i + 1), lat, lng).altitude - hc;
+
+        a = (h0 + h2) / 2 - h1;
+        b = (h2 - h0) / 2;
+        xe = -b / (2 * a);
+        ye = (a * xe + b) * xe + h1;
+        d = b * b - 4 * a * h1;
+        roots = 0;
+
+        if (d >= 0) {
+            dx = Math.sqrt(d) / (Math.abs(a) * 2);
+            x1 = xe - dx;
+            x2 = xe + dx;
+            if (Math.abs(x1) <= 1) roots++;
+            if (Math.abs(x2) <= 1) roots++;
+            if (x1 < -1) x1 = x2;
+        }
+
+        if (roots === 1) {
+            if (h0 < 0) rise = i + x1;
+            else set = i + x1;
+
+        } else if (roots === 2) {
+            rise = i + (ye < 0 ? x2 : x1);
+            set = i + (ye < 0 ? x1 : x2);
+        }
+
+        if (rise && set) break;
+
+        h0 = h2;
+    }
+
+    var result = {};
+
+    if (rise) result.rise = hoursLater(t, rise);
+    if (set) result.set = hoursLater(t, set);
+
+    if (!rise && !set) result[ye > 0 ? 'alwaysUp' : 'alwaysDown'] = true;
+
+    return result;
+};    
+
+function hoursLater(date, h) {
+    return new Date(date.valueOf() + h * dayMs / 24);
+}
+
+
+function getMoonPosition(date, lat, lng) {
+
+    var lw  = rad * -lng,
+        phi = rad * lat,
+        d   = toDays(date),
+
+        c = moonCoords(d),
+        H = siderealTime(d, lw) - c.ra,
+        h = altitude(H, phi, c.dec),
+        // formula 14.1 of "Astronomical Algorithms" 2nd edition by Jean Meeus (Willmann-Bell, Richmond) 1998.
+        pa = atan(sin(H), tan(phi) * cos(c.dec) - sin(c.dec) * cos(H));
+
+    h = h + astroRefraction(h); // altitude correction for refraction
+
+    return {
+        azimuth: azimuth(H, phi, c.dec),
+        altitude: h,
+        distance: c.dist,
+        parallacticAngle: pa
+    };
+};
+
+var dayMs = 1000 * 60 * 60 * 24,
+    J1970 = 2440588,
+    J2000 = 2451545;
+
+function toJulian(date) { return date.valueOf() / dayMs - 0.5 + J1970; }
+function fromJulian(j)  { return new Date((j + 0.5 - J1970) * dayMs); }
+function toDays(date)   { return toJulian(date) - J2000; }
+
+function moonCoords(d) { // geocentric ecliptic coordinates of the moon
+
+    var L = rad * (218.316 + 13.176396 * d), // ecliptic longitude
+        M = rad * (134.963 + 13.064993 * d), // mean anomaly
+        F = rad * (93.272 + 13.229350 * d),  // mean distance
+
+        l  = L + rad * 6.289 * sin(M), // longitude
+        b  = rad * 5.128 * sin(F),     // latitude
+        dt = 385001 - 20905 * cos(M);  // distance to the moon in km
+
+    return {
+        ra: rightAscension(l, b),
+        dec: declination(l, b),
+        dist: dt
+    };
+}
+
+var e = rad * 23.4397; // obliquity of the Earth
+
+function rightAscension(l, b) { return atan(sin(l) * cos(e) - tan(b) * sin(e), cos(l)); }
+function declination(l, b)    { return asin(sin(b) * cos(e) + cos(b) * sin(e) * sin(l)); }
+
+function azimuth(H, phi, dec)  { return atan(sin(H), cos(H) * sin(phi) - tan(dec) * cos(phi)); }
+function altitude(H, phi, dec) { return asin(sin(phi) * sin(dec) + cos(phi) * cos(dec) * cos(H)); }
+function siderealTime(d, lw) { return rad * (280.16 + 360.9856235 * d) - lw; }
+
+function astroRefraction(h) {
+    if (h < 0) // the following formula works for positive altitudes only.
+        h = 0; // if h = -0.08901179 a div/0 would occur.
+
+    // formula 16.4 of "Astronomical Algorithms" 2nd edition by Jean Meeus (Willmann-Bell, Richmond) 1998.
+    // 1.02 / tan(h + 10.26 / (h + 5.10)) h in degrees, result in arc minutes -> converted to rad:
+    return 0.0002967 / Math.tan(h + 0.00312536 / (h + 0.08901179));
+}
+
+let SR, SS, MR, MS, SUNR, SUNS;
+    
+function setSunMoon(){
+    let days = thDay - D0101 + 1
+    let sunT = getSunTimes(days, LAT, LON)
+    let SRHMS = deg2HMS(sunT.hourS)
+    let SSHMS = deg2HMS(sunT.hourE)
+    SUNR = Number(SRHMS[0]); SUNS = Number(SSHMS[0])
+    SR = zeropad(SRHMS[0])+":"+zeropad(SRHMS[1])
+    SS = zeropad(SSHMS[0])+":"+zeropad(SSHMS[1])
+    let DATE = new Date()
+    DATE.setHours(12)
+    let times = getMoonTimes(DATE, LAT, LON)
+    if (times.rise){
+        let MRHMS = Date2HMS(new Date(times.rise))
+        MR =  zeropad(MRHMS[0])+":"+zeropad(MRHMS[1])
+    }else{
+        MR = "-----"
+    }
+    if (times.set){
+        let MSHMS = Date2HMS(new Date(times.set))
+        MS =  zeropad(MSHMS[0])+":"+zeropad(MSHMS[1])
+    }else{
+        MS = "-----"
+    }
+}
+
+function drawSunMoon(ctx){
+    ctx.font = H*0.11 + "px arial";
+    ctx.fillText("☀", W1*0.2, H1*0.07)
+    ctx.fillText("🌙", W1*0.8, H1*0.07)
+    ctx.fillText((SR+"/"+SS), W1*0.18, H1*0.15)
+    ctx.font = H*0.11 + "px arial";
+    ctx.fillText((MR+"/"+MS), W1*0.82, H1*0.15)
+}
+
+const WEATHERICON =["🌞", "🌤", // 00
+                    "🌦", "🌦", // 10
+                    "🌫", "🌧", // 20
+                    "🌫", "🌫", // 30
+                    "🌫", "🌫", // 40
+                    "🌧", "🌧", // 50
+                    "☔", "☔", // 60
+                    "❄", "❄", // 70
+                    "☔", "❄", // 80 
+                    "⛈", "⛈"] // 90
+const FINECLOUD = ["🌞", "🌤", "🌥", "☁"]
+let TEMP, WEATHER
+
+const SUN = "./.CLOCKIMG/.sun.png"
+const SUNCLOUD = "./.CLOCKIMG/.sunCloud.png"
+const CLOUDSUN = "./.CLOCKIMG/.cloudSun.png"
+const STAR = "./.CLOCKIMG/.star.png"
+const MOONCLOUD = "./.CLOCKIMG/.moonCloud.png"
+const CLOUDMOON = "./.CLOCKIMG/.cloudMoon.png"
+const STARCLOUD = "./.CLOCKIMG/.starCloud.png"
+const CLOUDSTAR = "./.CLOCKIMG/.cloundStar.png"
+const CLOUD = "./.CLOCKIMG/.cloud.png"
+const CLOUDRAIN = "./.CLOCKIMG/.cloudRain.png"
+const RAIN = "./.CLOCKIMG/.rain.png"
+const CLOUDSUNRAIN = "./.CLOCKIMG/.cloudSunRain.png"
+const CLOUDMOONRAIN = "./.CLOCKIMG/.cloudMoonRain.png"
+const SNOW = "./.CLOCKIMG/.snow.png"
+const THUNDER = "./.CLOCKIMG/.thunder.png"
+const FOG = "./.CLOCKIMG/.fog.png"
+
+const WEATHERIMG = [SUN, SUNCLOUD,              // 0
+                    CLOUDSUNRAIN, CLOUDSUNRAIN, // 10
+                    FOG, RAIN,                  // 20
+                    FOG, FOG,                   // 30
+                    FOG, FOG,                   // 40
+                    CLOUDRAIN, CLOUDRAIN,       // 50
+                    CLOUDRAIN, RAIN,            // 60
+                    SNOW, SNOW,                 // 70
+                    RAIN, SNOW,                 // 80
+                    THUNDER, THUNDER]           // 90
+const FINEIMG = [[SUN, STAR],                   // 0
+                 [SUNCLOUD, MOONCLOUD],         // 1
+                 [CLOUDSUN, CLOUDMOON],         // 2
+                 [CLOUD, CLOUD]]                // 3
+
+let weatherImage = new Image()    
+
+
+function dispWeatherIcon(code){
+    if (code < 4)
+        return FINECLOUD[Math.floor(code)]
+    return WEATHERICON[Math.floor(code/5)]
+}        
+
+function getWeatherImage(code, hour){
+    const CODE = Math.floor(code)
+    if (CODE < 4)
+        if (hour > SUNS || hour < SUNR)
+            return FINEIMG[CODE][1]
+        else
+            return FINEIMG[CODE][0]
+    return WEATHERIMG[Math.floor(CODE/5)]
+}
+
+    
+// Open Meteo APIから予報を取得
+function getWeatherNow() {
+    let req = new XMLHttpRequest(); 
+    req.onreadystatechange = function() {	
+	if(req.readyState == 4 && req.status == 200){
+	    const jason = req.responseText.substr(1, req.responseText.length-2);
+	    const tempPos1 = jason.indexOf('"temperature_2m":[')
+	    const tempPos2 = jason.indexOf(']', tempPos1+17)
+	    TEMP = jason.substring(tempPos1+18, tempPos2).split(',')
+	    const weatPos1 = jason.indexOf('"weathercode":[')
+	    const weatPos2 = jason.indexOf(']', weatPos1+15)
+	    WEATHER = jason.substring(weatPos1+15, weatPos2).split(',')
+    }
+  };
+    const DATEST = Y+"-"+zeropad(M)+"-"+zeropad(D)
+    url = "https://api.open-meteo.com/v1/forecast?latitude=35.6801&longitude=139.6709&hourly=temperature_2m,weathercode&timezone=Asia%2FTokyo&start_date="+DATEST+"&end_date="+DATEST
+    
+    req.open("GET", url, false); 
+    req.send(null);
+}
+
+function drawWeatherNow(now, ctx, color){
+        const HOUR = now.getHours()
+        ctx.drawImage(weatherImage, 0, 0);
+        ctx.font = "bold " + W*0.07 + "px arial"
+        ctx.fillStyle = color
+        ctx.textAlign="center"
+        ctx.fillText(TEMP[HOUR], 0.12*W1, 0.3*H1);
+        ctx.fillText("℃", 0.12*W1, 0.4*H1);
+//        ctx.font = "bold " + W*0.12 + "px arial"
+//        ctx.fillStyle = color
+//        ctx.textAlign="center"
+//        ctx.fillText(dispWeatherIcon(WEATHER[HOUR]), 0.12*W1, 0.42*H1);
+        //ctx.fill()
+}    
+
+function ESieve(SMAX = 100000){
+    let sieve = new Array(SMAX);
+    sieve[0] = false;
+    sieve[1] = false;
+    for (let i = 2; i < SMAX; i++){
+	sieve[i] = true;
+    }
+    for (i = 2; i < Math.sqrt(SMAX); i++){
+	if (sieve[i]){
+	    for (let j = i+1; j < SMAX; j++){
+		if (j%i == 0 ){
+		    sieve[j] = false;
+		}
+	    }
+	}
+    }
+    let primes = [];
+    primes[0] = 2;
+    let j = 1;
+    for (let i = 3; i < SMAX; i += 2)
+	if (sieve[i])
+	    primes[j++] = i;
+
+    return primes;
+}
+
+   
+    
+</script>
+
+</body>
+</html>
