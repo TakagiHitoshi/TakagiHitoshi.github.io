@@ -35,8 +35,8 @@ const zeropad = (num) => {return ( '00' + num ).slice( -2 );};
 const WD   = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
 const DAYM = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
 const HOLDY = [
-     [1, 1], [1, 2], [1, 8], [2, 12], [2, 23], [3, 20], [4, 29], [5, 3], [5, 4], [5, 5],
-     [5, 6], [7, 15], [8, 12], [9, 16], [9, 23], [10, 14], [11, 4], [11, 23]];
+     [1, 1], [1, 12], [2, 11], [2, 23], [3, 20], [4, 29], [5, 3], [5, 4], [5, 5],
+     [5, 6], [7, 20], [8, 11], [9, 21], [9, 22],[9, 23], [10, 12], [11, 3], [11, 23]];
 const BRTDAY = [[1, 25], [2, 28], [4, 6], [7, 7], [7, 26], [8, 5]];
 //const STROKES = ['#E6E6FA', '#B0E0E6', '#98FB98', '#FFDAB9', '#FFC0CB', '#FFA07A'];
 const STROKES = ['#B0E0E6', '#B0E0E6', '#B0E0E6', '#FFC0CB', '#FFC0CB', '#FFC0CB'];
@@ -761,22 +761,22 @@ const WEATHERICON =["🌞", "🌤", // 00
 const FINECLOUD = ["🌞", "🌤", "🌥", "☁"]
 let TEMP, WEATHER
 
-const SUN = "sun.png"
-const SUNCLOUD = "sunCloud.png"
-const CLOUDSUN = "cloudSun.png"
-const STAR = "star.png"
-const MOONCLOUD = "moonCloud.png"
-const CLOUDMOON = "cloudMoon.png"
-const STARCLOUD = "starCloud.png"
-const CLOUDSTAR = "cloundStar.png"
-const CLOUD = "cloud.png"
-const CLOUDRAIN = "cloudRain.png"
-const RAIN = "rain.png"
-const CLOUDSUNRAIN = "cloudSunRain.png"
-const CLOUDMOONRAIN = "cloudMoonRain.png"
-const SNOW = "snow.png"
-const THUNDER = "thunder.png"
-const FOG = "fog.png"
+const SUN = "./.CLOCKIMG/.sun.png"
+const SUNCLOUD = "./.CLOCKIMG/.sunCloud.png"
+const CLOUDSUN = "./.CLOCKIMG/.cloudSun.png"
+const STAR = "./.CLOCKIMG/.star.png"
+const MOONCLOUD = "./.CLOCKIMG/.moonCloud.png"
+const CLOUDMOON = "./.CLOCKIMG/.cloudMoon.png"
+const STARCLOUD = "./.CLOCKIMG/.starCloud.png"
+const CLOUDSTAR = "./.CLOCKIMG/.cloundStar.png"
+const CLOUD = "./.CLOCKIMG/.cloud.png"
+const CLOUDRAIN = "./.CLOCKIMG/.cloudRain.png"
+const RAIN = "./.CLOCKIMG/.rain.png"
+const CLOUDSUNRAIN = "./.CLOCKIMG/.cloudSunRain.png"
+const CLOUDMOONRAIN = "./.CLOCKIMG/.cloudMoonRain.png"
+const SNOW = "./.CLOCKIMG/.snow.png"
+const THUNDER = "./.CLOCKIMG/.thunder.png"
+const FOG = "./.CLOCKIMG/.fog.png"
 
 const WEATHERIMG = [SUN, SUNCLOUD,              // 0
                     CLOUDSUNRAIN, CLOUDSUNRAIN, // 10
@@ -819,7 +819,7 @@ function getWeatherNow() {
     req.onreadystatechange = function() {	
 	if(req.readyState == 4 && req.status == 200){
 	    const jason = req.responseText.substr(1, req.responseText.length-2);
-	    const tempPos1 = jason.indexOf('"temperature_2m":[')
+	    const tempPos1 = jason.indexOf('"apparent_temperature":[')
 	    const tempPos2 = jason.indexOf(']', tempPos1+17)
 	    TEMP = jason.substring(tempPos1+18, tempPos2).split(',')
 	    const weatPos1 = jason.indexOf('"weathercode":[')
@@ -828,7 +828,7 @@ function getWeatherNow() {
     }
   };
     const DATEST = Y+"-"+zeropad(M)+"-"+zeropad(D)
-    url = "https://api.open-meteo.com/v1/forecast?latitude=35.6801&longitude=139.6709&hourly=temperature_2m,weathercode&timezone=Asia%2FTokyo&start_date="+DATEST+"&end_date="+DATEST
+    url = "https://api.open-meteo.com/v1/forecast?latitude=35.6801&longitude=139.6709&hourly=apparent_temperature,weathercode&timezone=Asia%2FTokyo&start_date="+DATEST+"&end_date="+DATEST
     
     req.open("GET", url, false); 
     req.send(null);
