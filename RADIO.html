@@ -1,0 +1,33 @@
+<script>
+//<input type="button" onclick="window.close();" value="CLOSE">
+const IN = (prompt) => {return window.prompt(prompt, "0")};
+const SEL = ["4", "４", "3", "３", "0", "０", "2", "２", "1", "１", "5", "５", "6", "６", "7", "７", "8", "8"]; // 0 is default
+const STA = [
+    ['https://abcaudio.com/', 'ABC News'],
+    ['https://www.musicforprogramming.net/?one','musicForProgramming'],
+    ['https://www.bbc.com/audio/play/live/bbc_world_service', 'BBC WS'],
+    ['http://player.181fm.com/?station=181-chilled', 'CHILLED'],
+    ['https://somafm.com/player/#/now-playing/lush', 'LUSH'],
+    ['http://kiwisdr.hirokinet.com:8073/?f=810sam', 'AFN'],
+    ['http://jp1odj-air.proxy.kiwisdr.com:8073/', 'AIRBAND'],
+    ['https://www.bbc.com/audio/play/live/bbc_radio_fourfm', 'BBC 4'],
+    ['https://www.radiojapan.org/afn-tokyo-japan-only', 'AFN GO']
+    ];
+let PROMPT = "";
+for (let i = 0; i < STA.length; i++){
+    let ind = SEL.indexOf(i.toString())/2;
+    console.log(ind)
+    PROMPT += i + " " + STA[ind][1] + " ";
+}
+    
+let usr = IN(PROMPT);
+let sel = Math.floor(Number(SEL.indexOf(usr))/2);
+//for (; SEL.indexOf(usr) == -1; usr = IN(PROMPT)){}
+if (usr !== null && sel != -1){
+    const url = STA[sel][0];
+    const TITLE = STA[sel][1];
+    let win = window.open(url, TITLE, 'innerHeight=400, innerWidth=300,menubar=no, toolbar=no, location=no,titlebar=no,tabbar=no,left=1600,top=300');
+//window.close();
+}
+window.history.back(-1);
+</script>
