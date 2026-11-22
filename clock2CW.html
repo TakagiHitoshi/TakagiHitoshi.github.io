@@ -419,8 +419,7 @@ function DrawCal(now){
        drawWeatherNow(now, ctx, 'black')
        setSunMoon()
        drawSunMoon(ctx1)
-       const HOUR = now.getHours()
-       const imagePath = getWeatherImage(WEATHER[HOUR], HOUR)
+       const imagePath = getWeatherImage(WEATHER)
        weatherImage.src = imagePath
        cal = "on";
        getJSON();
@@ -759,24 +758,24 @@ const WEATHERICON =["🌞", "🌤", // 00
                     "☔", "❄", // 80 
                     "⛈", "⛈"] // 90
 const FINECLOUD = ["🌞", "🌤", "🌥", "☁"]
-let TEMP, WEATHER
+let TEMP, ATEMP, WEATHER
 
-const SUN = "sun.png"
-const SUNCLOUD = "sunCloud.png"
-const CLOUDSUN = "cloudSun.png"
-const STAR = "star.png"
-const MOONCLOUD = "moonCloud.png"
-const CLOUDMOON = "cloudMoon.png"
-const STARCLOUD = "starCloud.png"
-const CLOUDSTAR = "cloundStar.png"
-const CLOUD = "cloud.png"
-const CLOUDRAIN = "cloudRain.png"
-const RAIN = "rain.png"
-const CLOUDSUNRAIN = "cloudSunRain.png"
-const CLOUDMOONRAIN = "cloudMoonRain.png"
-const SNOW = "snow.png"
-const THUNDER = "thunder.png"
-const FOG = "fog.png"
+const SUN = "./.CLOCKIMG/.sun.png"
+const SUNCLOUD = "./.CLOCKIMG/.sunCloud.png"
+const CLOUDSUN = "./.CLOCKIMG/.cloudSun.png"
+const STAR = "./.CLOCKIMG/.star.png"
+const MOONCLOUD = "./.CLOCKIMG/.moonCloud.png"
+const CLOUDMOON = "./.CLOCKIMG/.cloudMoon.png"
+const STARCLOUD = "./.CLOCKIMG/.starCloud.png"
+const CLOUDSTAR = "./.CLOCKIMG/.cloundStar.png"
+const CLOUD = "./.CLOCKIMG/.cloud.png"
+const CLOUDRAIN = "./.CLOCKIMG/.cloudRain.png"
+const RAIN = "./.CLOCKIMG/.rain.png"
+const CLOUDSUNRAIN = "./.CLOCKIMG/.cloudSunRain.png"
+const CLOUDMOONRAIN = "./.CLOCKIMG/.cloudMoonRain.png"
+const SNOW = "./.CLOCKIMG/.snow.png"
+const THUNDER = "./.CLOCKIMG/.thunder.png"
+const FOG = "./.CLOCKIMG/.fog.png"
 
 const WEATHERIMG = [SUN, SUNCLOUD,              // 0
                     CLOUDSUNRAIN, CLOUDSUNRAIN, // 10
@@ -816,36 +815,32 @@ function getWeatherImage(code, hour){
 // Open Meteo APIから予報を取得
 function getWeatherNow() {
     let req = new XMLHttpRequest(); 
-    req.onreadystatechange = function() {	
+    req.onreadystatechange = function() {
 	if(req.readyState == 4 && req.status == 200){
-	    const jason = req.responseText.substr(1, req.responseText.length-2);
-	    const tempPos1 = jason.indexOf('"apparent_temperature":[')
-	    const tempPos2 = jason.indexOf(']', tempPos1+17)
-	    TEMP = jason.substring(tempPos1+18, tempPos2).split(',')
-	    const weatPos1 = jason.indexOf('"weathercode":[')
-	    const weatPos2 = jason.indexOf(']', weatPos1+15)
-	    WEATHER = jason.substring(weatPos1+15, weatPos2).split(',')
+	    const jason = JSON.parse(req.responseText);
+       	    ATEMP = Number(jason['current']['apparent_temperature']);
+       	    TEMP = Number(jason['current']['temperature_2m']);
+	    WEATHER = Number(jason['current']['weather_code']);
     }
   };
-    const DATEST = Y+"-"+zeropad(M)+"-"+zeropad(D)
-    url = "https://api.open-meteo.com/v1/forecast?latitude=35.6801&longitude=139.6709&hourly=apparent_temperature,weathercode&timezone=Asia%2FTokyo&start_date="+DATEST+"&end_date="+DATEST
+    url = "https://api.open-meteo.com/v1/forecast?latitude=35.6801&longitude=139.6709&current=temperature_2m,apparent_temperature,weather_code&timezone=Asia%2FTokyo"
     
     req.open("GET", url, false); 
     req.send(null);
 }
 
 function drawWeatherNow(now, ctx, color){
-        const HOUR = now.getHours()
         ctx.drawImage(weatherImage, 0, 0);
-        ctx.font = "bold " + W*0.07 + "px arial"
+        ctx.font = "bold " + W*0.08 + "px arial"
         ctx.fillStyle = color
         ctx.textAlign="center"
-        ctx.fillText(TEMP[HOUR], 0.12*W1, 0.3*H1);
-        ctx.fillText("℃", 0.12*W1, 0.4*H1);
+        ctx.fillText(TEMP, 0.10*W1, 0.28*H1);
+        ctx.fillText(ATEMP, 0.1*W1, 0.38*H1);
+        ctx.fillText("℃", 0.2*W1, 0.33*H1);
 //        ctx.font = "bold " + W*0.12 + "px arial"
 //        ctx.fillStyle = color
 //        ctx.textAlign="center"
-//        ctx.fillText(dispWeatherIcon(WEATHER[HOUR]), 0.12*W1, 0.42*H1);
+//        ctx.fillText(dispWeatherIcon(WEATHER), 0.12*W1, 0.42*H1);
         //ctx.fill()
 }    
 
